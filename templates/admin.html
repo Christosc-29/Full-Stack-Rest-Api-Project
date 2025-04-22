@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <h1>⚙️ Admin Panel</h1>
+
+  <!-- Add Product Section -->
+  <section>
+    <h2>Add Product</h2>
+    <table id="bulk-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Details</th>
+          <th>Image URL</th>
+          <th>Remove</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" class="bulk-name"></td>
+          <td><input type="number" class="bulk-price" step="0.01"></td>
+          <td><input type="number" class="bulk-stock"></td>
+          <td><input type="text" class="bulk-details"></td>
+          <td><input type="text" class="bulk-image-url"></td>
+          <td><button onclick="this.closest('tr').remove()">❌</button></td>
+        </tr>
+      </tbody>
+    </table>
+  
+    <button onclick="addBulkRow()">➕ Add Row</button>
+    <button onclick="submitBulkProducts()">📦 Submit</button>
+  </section>
+  
+<hr>
+
+  <!-- Delete Product Section -->
+  <section>
+    <h2>Delete Product</h2>
+    <input type="number" id="delete-id" placeholder="Delete by ID">
+    <input type="text" id="delete-name" placeholder="Delete by Name">
+    <button onclick="smartDelete()">🗑️ Delete Product</button>
+  </section>
+
+  <hr>
+
+  <!-- Delete All Products -->
+  <section>
+    <h2>Danger Zone</h2>
+    <button onclick="deleteAllProducts()">🧨 Delete ALL Products</button>
+  </section>
+
+  <hr>
+
+  <!-- Add/Delete -->
+  <section>
+    <h2>Edit Product</h2>
+    <input type="number" id="edit-id" placeholder="Product ID to edit"><br>
+    <input type="text" id="edit-name" placeholder="New Name"><br>
+    <input type="number" id="edit-price" placeholder="New Price"><br>
+    <input type="number" id="edit-stock" placeholder="New Stock"><br>
+    <input type="text" id="edit-details" placeholder="New Details"><br>
+    <input type="text" id="edit-image-url" placeholder="New Image URL"><br>
+    <button onclick="editProduct()">✏️ Update Product</button>
+  </section>
+  <hr>
+
+  <!-- Navigation -->
+  <section>
+    <button onclick="goToHome()">🏠 Return to Home Page</button>
+    <button onclick="goToUsers()">👤 Go to User Management</button>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

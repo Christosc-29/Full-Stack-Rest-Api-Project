@@ -1,0 +1,236 @@
+/* Reset */
+body, h1, h2, h3, p, ul, table, th, td, input, button, a {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f6f7fb;
+  color: #333;
+  min-height: 100vh;
+  padding: 0 0 60px 0;
+}
+
+/* Containers */
+header, section {
+  margin: 20px auto;
+  max-width: 1100px; /* ✅ Increased width from 950px */
+  padding: 20px 32px 16px 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 18px rgba(25, 50, 60, 0.07);
+}
+
+/* Header layout */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+header h1 {
+  font-size: 2rem;
+  color: #5670df;
+  letter-spacing: 2px;
+  flex: 1 1 auto;
+}
+
+/* Login input group */
+header .auth {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+header .auth input {
+  width: 130px;
+  min-width: 100px;
+}
+
+header button {
+  white-space: nowrap;
+}
+
+/* Inputs */
+input[type="text"], input[type="number"], input[type="password"] {
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1.5px solid #d6d9e6;
+  margin: 3px 8px 3px 0;
+  font-size: 1rem;
+  background: #f9faff;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+input:focus {
+  outline: none;
+  border-color: #6f8bfa;
+}
+
+/* Buttons */
+button {
+  padding: 7px 16px;
+  border-radius: 7px;
+  border: none;
+  background: linear-gradient(90deg,#6f8bfa 70%,#5ecbe7 100%);
+  color: #fff;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+button:hover, button:focus {
+  background: linear-gradient(90deg,#5071f3 70%,#25b6de 100%);
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* Divider */
+hr {
+  border: none;
+  border-top: 1.7px solid #e7e9f2;
+  margin: 32px 0 18px 0;
+}
+
+/* Table */
+section table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: #fafbfe;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px #5ecbe70a;
+  margin: 14px 0;
+}
+
+th, td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eef1f7;
+}
+
+th {
+  background: #eef2fa;
+  font-weight: 600;
+  color: #5670df;
+  font-size: 1.02rem;
+  letter-spacing: 1px;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover {
+  background: #f2f6ff;
+}
+
+section table input,
+section table button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Lists */
+ul {
+  margin: 8px 0 8px 16px;
+  list-style: disc;
+}
+
+/* Product Card */
+.product {
+  display: inline-block;
+  vertical-align: top;
+  margin: 12px;
+  width: 230px;
+  min-height: 240px;
+  padding: 17px 14px 14px 14px;
+  background: #fff;
+  border-radius: 13px;
+  box-shadow: 0 2px 12px #5670df11;
+  border: 1.5px solid #e8eaf7;
+  transition: box-shadow 0.16s;
+}
+
+.product:hover {
+  box-shadow: 0 5px 24px #5ecbe730;
+  border-color: #a6c9f7;
+}
+
+.product img {
+  display: block;
+  margin: 0 auto 7px auto;
+  max-width: 90%;
+  border-radius: 7px;
+  box-shadow: 0 1px 4px #5ecbe711;
+}
+
+.product h3 {
+  color: #465fb7;
+  font-size: 1.1rem;
+  margin-bottom: 3px;
+}
+
+.product p {
+  margin: 3px 0 3px 0;
+  font-size: 0.98rem;
+}
+
+.product a {
+  display: inline-block;
+  margin-top: 7px;
+  color: #1ca7ea;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.17s;
+}
+
+.product a:hover {
+  color: #465fb7;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  header, section {
+    padding: 14px 5px 12px 5px;
+    max-width: 99vw;
+  }
+
+  .product {
+    width: 94vw;
+    margin: 10px 1vw;
+  }
+
+  table, th, td {
+    font-size: 0.97rem;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+  }
+
+  header .auth {
+    flex-wrap: wrap;
+  }
+
+  header .auth input {
+    width: 100%;
+  }
+}
+
+/* Placeholders */
+::-webkit-input-placeholder { color: #a6aab6; }
+::-moz-placeholder { color: #a6aab6; }
+:-ms-input-placeholder { color: #a6aab6; }
+::placeholder { color: #a6aab6; }

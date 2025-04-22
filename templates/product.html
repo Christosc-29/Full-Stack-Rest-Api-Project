@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Details</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <img id="product-image" src="" alt="Product Image" width="300"><br><br>
+  <h1 id="product-name">Loading...</h1>
+  <p><strong>🆔 ID:</strong> <span id="product-id"></span></p>
+  <p><strong>💰 Price:</strong> €<span id="product-price"></span></p>
+  <p><strong>📦 Stock:</strong> <span id="product-stock"></span></p>
+  <p><strong>📝 Details:</strong> <span id="product-details"></span></p>
+  <hr>
+  <button onclick="window.location.href='/home'">⬅️ Back to Home</button>
+
+  <script src="{{ url_for('static', filename='js/product.js') }}"></script>
+</body>
+</html>
