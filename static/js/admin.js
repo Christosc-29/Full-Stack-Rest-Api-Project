@@ -1,6 +1,7 @@
 function addBulkRow() {
   const table = document.querySelector('#bulk-table tbody');
   const row = document.createElement('tr');
+  console.log("✅ admin.js loaded!");
 
   row.innerHTML = `
     <td><input type="text" class="bulk-name"></td>
@@ -40,19 +41,19 @@ function submitBulkProducts() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ products })
   })
-  .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "Products added!");
-    document.querySelector('#bulk-table tbody').innerHTML = '';
-    addBulkRow(); // Reset with 1 row for convenience
-  });
+    .then(res => res.json())
+    .then(msg => {
+      alert(msg.message || "Products added!");
+      document.querySelector('#bulk-table tbody').innerHTML = '';
+      addBulkRow();
+    });
 }
 
-// ------------------ Edit / Delete / Navigation (unchanged) ------------------
 
 function smartDelete() {
   const id = document.getElementById("delete-id").value;
   const name = document.getElementById("delete-name").value;
+  console.log("🧪 Running updated smartDelete");
 
   if (id) {
     fetch(`/api/products/${id}`, {
@@ -60,9 +61,13 @@ function smartDelete() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirm: "Y" })
     })
-    .then(res => res.json())
-    .then(msg => {
-      alert(msg.message || "Product deleted.");
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "✅ Product deleted!");
+      } else {
+        alert(data.error || "❌ Failed: " + data.error);
+      }
     });
   } else if (name) {
     fetch(`/api/products/name/${encodeURIComponent(name)}`, {
@@ -70,9 +75,13 @@ function smartDelete() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirm: "Y" })
     })
-    .then(res => res.json())
-    .then(msg => {
-      alert(msg.message || "Product deleted.");
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "✅ Product deleted!");
+      } else {
+        alert(data.error || "❌ Failed: " + data.error);
+      }
     });
   } else {
     alert("❗ Please enter either a Product ID or Name to delete.");
@@ -88,10 +97,10 @@ function deleteAllProducts() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirm: "Y" })
   })
-  .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "All products deleted.");
-  });
+    .then(res => res.json())
+    .then(msg => {
+      alert(msg.message || "All products deleted.");
+    });
 }
 
 function editProduct() {
@@ -110,9 +119,13 @@ function editProduct() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updatedData)
   })
-    .then(res => res.json())
-    .then(msg => {
-      alert(msg.message || "Product updated!");
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || `✅ Product ID ${id} updated successfully.`);
+      } else {
+        alert(data.error || `❌ Failed to update product ID ${id}.`);
+      }
     });
 }
 

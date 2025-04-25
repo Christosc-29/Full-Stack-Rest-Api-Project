@@ -103,6 +103,11 @@ def delete_product(product_id):
         }), 400
 
     cursor = mysql.connection.cursor()
+    cursor.execute("SELECT id FROM store WHERE id = %s", (product_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        return jsonify({"error": f"❌ Product ID {product_id} not found."}), 404
+
     cursor.execute("DELETE FROM store WHERE id = %s", (product_id,))
     mysql.connection.commit()
     cursor.close()
@@ -117,10 +122,15 @@ def delete_product_by_name(name):
     if confirm != "Y":
         return jsonify({
             "message": f"⚠️ You are about to delete product named '{name}'.",
-            "hint": "Send again with {{ 'confirm': 'Y' }} to proceed."
+            "hint": "Send again with { 'confirm': 'Y' } to proceed."
         }), 400
 
     cursor = mysql.connection.cursor()
+    cursor.execute("SELECT name FROM store WHERE name = %s", (name,))
+    if not cursor.fetchone():
+        cursor.close()
+        return jsonify({"error": f"❌ Product named '{name}' not found."}), 404
+
     cursor.execute("DELETE FROM store WHERE name = %s", (name,))
     mysql.connection.commit()
     cursor.close()
@@ -155,6 +165,11 @@ def update_product(product_id):
     image_url = data.get('image_url')
 
     cursor = mysql.connection.cursor()
+    cursor.execute("SELECT id FROM store WHERE id = %s", (product_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        return jsonify({"error": f"❌ Product ID {product_id} not found."}), 404
+
     cursor.execute("""
         UPDATE store
         SET name = %s, price = %s, stock = %s, details = %s, image_url = %s
@@ -187,7 +202,6 @@ def add_bulk_products():
     cursor.close()
 
     return jsonify({"message": f"✅ {len(products)} products added in bulk."})
-
 
 # ---------------------- USER API ROUTES ----------------------
 
@@ -236,11 +250,17 @@ def delete_user(user_id):
         }), 400
 
     cursor = mysql.connection.cursor()
+    cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        return jsonify({"error": f"❌ User ID {user_id} not found."}), 404
+
     cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
     mysql.connection.commit()
     cursor.close()
 
     return jsonify({"message": f"🗑️ User ID {user_id} deleted."})
+
 
 @app.route('/api/users/<int:user_id>/password', methods=['PUT'])
 def change_user_password(user_id):

@@ -56,20 +56,42 @@ function addUser() {
   });
 }
 
-function deleteUser() {
-  const id = document.getElementById("delete-user-id").value;
+function deleteUser(userId = null) {
+  if (!userId) {
+    userId = document.getElementById("delete-user-id").value;
+  }
 
-  fetch(`/api/users/${id}`, {
+  if (!userId) {
+    alert("❗ Please enter a User ID to delete.");
+    return;
+  }
+
+  const confirmDelete = confirm(`⚠️ Are you sure you want to delete user ID ${userId}?`);
+  if (!confirmDelete) return;
+
+  fetch(`/api/users/${userId}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirm: "Y" })
   })
-  .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "User deleted!");
-    loadUsers();
+  .then(async res => {
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "✅ User deleted.");
+      loadUsers(); // Refresh user list
+    } else {
+      alert(data.error || "❌ Failed to delete user.");
+    }
+  })
+  .catch(err => {
+    alert("❌ An unexpected error occurred.");
+    console.error(err);
   });
 }
+
+
+
+
 
 function goToHome() {
   window.location.href = "/home";

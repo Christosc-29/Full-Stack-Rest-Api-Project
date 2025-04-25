@@ -50,8 +50,8 @@ header .auth {
 }
 
 header .auth input {
-  width: 130px;
-  min-width: 100px;
+  width: 180px;
+  min-width: 140px;
 }
 
 header button {
