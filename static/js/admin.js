@@ -1,3 +1,9 @@
+
+// ===================================================
+// 📦 Bulk Product Management
+// ===================================================
+
+// ➡️ Add a new empty row to the Bulk Add table
 function addBulkRow() {
   const table = document.querySelector('#bulk-table tbody');
   const row = document.createElement('tr');
@@ -15,6 +21,7 @@ function addBulkRow() {
   table.appendChild(row);
 }
 
+// ➡️ Collect all rows and submit them as bulk products
 function submitBulkProducts() {
   const rows = document.querySelectorAll('#bulk-table tbody tr');
   const products = [];
@@ -41,15 +48,19 @@ function submitBulkProducts() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ products })
   })
-    .then(res => res.json())
-    .then(msg => {
-      alert(msg.message || "Products added!");
-      document.querySelector('#bulk-table tbody').innerHTML = '';
-      addBulkRow();
-    });
+  .then(res => res.json())
+  .then(msg => {
+    alert(msg.message || "Products added!");
+    document.querySelector('#bulk-table tbody').innerHTML = '';
+    addBulkRow();
+  });
 }
 
+// ===================================================
+// 🗑️ Single or Bulk Deletion Functions
+// ===================================================
 
+// ➡️ Smart delete by ID or Name
 function smartDelete() {
   const id = document.getElementById("delete-id").value;
   const name = document.getElementById("delete-name").value;
@@ -88,6 +99,7 @@ function smartDelete() {
   }
 }
 
+// ➡️ Delete ALL products after confirmation
 function deleteAllProducts() {
   const confirmDelete = confirm("⚠️ You are about to delete ALL products. Are you sure?");
   if (!confirmDelete) return;
@@ -97,12 +109,17 @@ function deleteAllProducts() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirm: "Y" })
   })
-    .then(res => res.json())
-    .then(msg => {
-      alert(msg.message || "All products deleted.");
-    });
+  .then(res => res.json())
+  .then(msg => {
+    alert(msg.message || "All products deleted.");
+  });
 }
 
+// ===================================================
+// ✏️ Editing Products
+// ===================================================
+
+// ➡️ Edit an existing product by ID
 function editProduct() {
   const id = document.getElementById("edit-id").value;
 
@@ -119,20 +136,26 @@ function editProduct() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updatedData)
   })
-    .then(async res => {
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || `✅ Product ID ${id} updated successfully.`);
-      } else {
-        alert(data.error || `❌ Failed to update product ID ${id}.`);
-      }
-    });
+  .then(async res => {
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || `✅ Product ID ${id} updated successfully.`);
+    } else {
+      alert(data.error || `❌ Failed to update product ID \${id}.`);
+    }
+  });
 }
 
+// ===================================================
+// 🚪 Page Navigation
+// ===================================================
+
+// ➡️ Navigate back to Home page
 function goToHome() {
   window.location.href = "/home";
 }
 
+// ➡️ Navigate to Users management page
 function goToUsers() {
   window.location.href = "/users";
 }

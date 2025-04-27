@@ -1,58 +1,79 @@
+
+# -----------------------------------------
+# Import Libraries and Setup
+# -----------------------------------------
+
 import pymysql
 pymysql.install_as_MySQLdb()
 
 from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
 
+# Initialize Flask app
 app = Flask(__name__)
 
-# MySQL Config
+# Configure MySQL connection
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'cmp210'
 
+# Initialize MySQL extension
 mysql = MySQL(app)
 
-# ---------------------- HTML PAGE ROUTES ----------------------
+# -----------------------------------------
+# Page Routes (HTML pages)
+# -----------------------------------------
 
+# Route: /home
+# Method: GET
+# Purpose: Render the home page (index.html)
 @app.route('/home')
 def home_page():
     return render_template('index.html')
 
+# Route: /admin
+# Method: GET
+# Purpose: Render the admin panel page
 @app.route('/admin')
 def admin_page():
     return render_template('admin.html')
 
+# Route: /users
+# Method: GET
+# Purpose: Render the user management page
 @app.route('/users')
 def users_page():
     return render_template('users.html')
 
+# Route: /product
+# Method: GET
+# Purpose: Render a specific product details page
 @app.route('/product')
 def product_page():
     return render_template('product.html')
 
+# -----------------------------------------
+# API Routes for Products
+# -----------------------------------------
 
-# ---------------------- PRODUCT API ROUTES ----------------------
-
+# Route: /api/products
+# Method: GET
+# Purpose: Return all products
 @app.route('/api/products', methods=['GET'])
 def get_products():
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id, name, price, stock FROM store")
     rows = cursor.fetchall()
     cursor.close()
-
-    products = []
-    for row in rows:
-        products.append({
-            "id": row[0],
-            "name": row[1],
-            "price": float(row[2]),
-            "stock": row[3]
-        })
-
+    products = [{"id": row[0], "name": row[1], "price": float(row[2]), "stock": row[3]} for row in rows]
     return jsonify(products)
 
+# (Continuing with more after this)
+
+# Route: /api/products
+# Method: POST
+# Purpose: Add a new product to the store
 @app.route('/api/products', methods=['POST'])
 def add_product():
     data = request.get_json()
@@ -72,6 +93,9 @@ def add_product():
 
     return jsonify({"message": "✅ Product added successfully!"}), 201
 
+# Route: /api/products/<product_id>
+# Method: GET
+# Purpose: Get a single product's full details by ID
 @app.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product_by_id(product_id):
     cursor = mysql.connection.cursor()
@@ -81,26 +105,21 @@ def get_product_by_id(product_id):
 
     if row:
         return jsonify({
-            "id": row[0],
-            "name": row[1],
-            "price": float(row[2]),
-            "stock": row[3],
-            "details": row[4] or "",
-            "image_url": row[5] or ""
+            "id": row[0], "name": row[1], "price": float(row[2]),
+            "stock": row[3], "details": row[4] or "", "image_url": row[5] or ""
         })
     else:
-        return jsonify({"error": "🔍 Το προϊόν δεν βρέθηκε"}), 404
+        return jsonify({"error": "🔍 Product not found."}), 404
 
+# Route: /api/products/<product_id>
+# Method: DELETE
+# Purpose: Delete a product by ID (with confirmation)
 @app.route('/api/products/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
     data = request.get_json()
     confirm = data.get('confirm')
-
     if confirm != "Y":
-        return jsonify({
-            "message": f"⚠️ You are about to delete product with ID {product_id}.",
-            "hint": "Send again with { 'confirm': 'Y' } to proceed."
-        }), 400
+        return jsonify({"message": f"⚠️ Confirm deletion of product ID {product_id}."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id FROM store WHERE id = %s", (product_id,))
@@ -114,16 +133,15 @@ def delete_product(product_id):
 
     return jsonify({"message": f"🗑️ Product ID {product_id} deleted."})
 
+# Route: /api/products/name/<name>
+# Method: DELETE
+# Purpose: Delete a product by its name (with confirmation)
 @app.route('/api/products/name/<string:name>', methods=['DELETE'])
 def delete_product_by_name(name):
     data = request.get_json()
     confirm = data.get('confirm')
-
     if confirm != "Y":
-        return jsonify({
-            "message": f"⚠️ You are about to delete product named '{name}'.",
-            "hint": "Send again with { 'confirm': 'Y' } to proceed."
-        }), 400
+        return jsonify({"message": f"⚠️ Confirm deletion of product named '{name}'."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT name FROM store WHERE name = %s", (name,))
@@ -137,16 +155,15 @@ def delete_product_by_name(name):
 
     return jsonify({"message": f"🗑️ Product named '{name}' deleted."})
 
+# Route: /api/products/all
+# Method: DELETE
+# Purpose: Delete all products from the store (with confirmation)
 @app.route('/api/products/all', methods=['DELETE'])
 def delete_all_products():
     data = request.get_json()
     confirm = data.get('confirm')
-
     if confirm != "Y":
-        return jsonify({
-            "message": "⚠️ You are about to delete ALL products.",
-            "hint": "Send again with { 'confirm': 'Y' } to proceed."
-        }), 400
+        return jsonify({"message": "⚠️ Confirm deletion of ALL products."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM store")
@@ -155,6 +172,9 @@ def delete_all_products():
 
     return jsonify({"message": "🧨 All products deleted."})
 
+# Route: /api/products/<product_id>
+# Method: PUT
+# Purpose: Update a product's details
 @app.route('/api/products/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     data = request.get_json()
@@ -180,6 +200,9 @@ def update_product(product_id):
 
     return jsonify({"message": f"✏️ Product ID {product_id} updated successfully."})
 
+# Route: /api/products/bulk
+# Method: POST
+# Purpose: Add multiple products in bulk
 @app.route('/api/products/bulk', methods=['POST'])
 def add_bulk_products():
     data = request.get_json()
@@ -187,24 +210,22 @@ def add_bulk_products():
 
     cursor = mysql.connection.cursor()
     for product in products:
-        name = product.get('name')
-        price = product.get('price')
-        stock = product.get('stock')
-        details = product.get('details')
-        image_url = product.get('image_url')
-
         cursor.execute(
             "INSERT INTO store (name, price, stock, details, image_url) VALUES (%s, %s, %s, %s, %s)",
-            (name, price, stock, details, image_url)
+            (product['name'], product['price'], product['stock'], product['details'], product['image_url'])
         )
-
     mysql.connection.commit()
     cursor.close()
 
     return jsonify({"message": f"✅ {len(products)} products added in bulk."})
 
-# ---------------------- USER API ROUTES ----------------------
+# -----------------------------------------
+# API Routes for Users
+# -----------------------------------------
 
+# Route: /api/users
+# Method: GET
+# Purpose: Return all users with passwords (for login check)
 @app.route('/api/users', methods=['GET'])
 def get_user_credentials():
     cursor = mysql.connection.cursor()
@@ -214,6 +235,9 @@ def get_user_credentials():
 
     return jsonify([{"username": row[0], "password": row[1]} for row in rows])
 
+# Route: /api/users/all
+# Method: GET
+# Purpose: Return all users (without passwords)
 @app.route('/api/users/all', methods=['GET'])
 def get_all_users():
     cursor = mysql.connection.cursor()
@@ -223,6 +247,9 @@ def get_all_users():
 
     return jsonify([{"id": row[0], "username": row[1]} for row in rows])
 
+# Route: /api/users
+# Method: POST
+# Purpose: Add a new user
 @app.route('/api/users', methods=['POST'])
 def add_user():
     data = request.get_json()
@@ -236,6 +263,9 @@ def add_user():
 
     return jsonify({"message": "✅ User added!"})
 
+# Route: /api/users/<user_id>
+# Method: DELETE
+# Purpose: Delete a user by ID (except rootadmin)
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     if user_id == 999:
@@ -243,11 +273,8 @@ def delete_user(user_id):
 
     data = request.get_json()
     confirm = data.get('confirm')
-
     if confirm != "Y":
-        return jsonify({
-            "message": f"⚠️ Confirm deletion of user ID {user_id} with {{ 'confirm': 'Y' }}"
-        }), 400
+        return jsonify({"message": f"⚠️ Confirm deletion of user ID {user_id}."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
@@ -261,7 +288,9 @@ def delete_user(user_id):
 
     return jsonify({"message": f"🗑️ User ID {user_id} deleted."})
 
-
+# Route: /api/users/<user_id>/password
+# Method: PUT
+# Purpose: Update a user's password
 @app.route('/api/users/<int:user_id>/password', methods=['PUT'])
 def change_user_password(user_id):
     if user_id == 999:
@@ -277,8 +306,10 @@ def change_user_password(user_id):
 
     return jsonify({"message": f"🔑 Password updated for user ID {user_id}."})
 
+# -----------------------------------------
+# Main Run
+# -----------------------------------------
 
-# ---------------------- MAIN ----------------------
-
+# Start the Flask development server
 if __name__ == '__main__':
     app.run(debug=True)

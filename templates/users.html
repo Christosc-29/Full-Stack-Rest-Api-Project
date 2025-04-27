@@ -3,38 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <title>User Management</title>
+
+  <!-- Link to external CSS stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+
   <h1>👤 User Management</h1>
 
+  <!-- ===========================
+       Section: Add New User
+       =========================== -->
   <section>
     <h2>Add User</h2>
+    <!-- Input fields for new user -->
     <input type="text" id="new-username" placeholder="Username"><br>
     <input type="password" id="new-password" placeholder="Password"><br>
+    <!-- Add user button -->
     <button onclick="addUser()">➕ Add User</button>
   </section>
 
   <hr>
 
+  <!-- ===========================
+       Section: Delete Existing User
+       =========================== -->
   <section>
     <h2>Delete User by ID</h2>
+    <!-- Input field to delete user by ID -->
     <input type="number" id="delete-user-id" placeholder="User ID"><br>
+    <!-- Delete user button -->
     <button onclick="deleteUser()">🗑️ Delete User</button>
   </section>
 
   <hr>
 
+  <!-- ===========================
+       Section: Display Users
+       =========================== -->
   <section>
     <h2>Current Users</h2>
+    <!-- User list will be dynamically populated here -->
     <ul id="user-list"></ul>
-  </section>  
+  </section>
 
+  <!-- ===========================
+       Section: Navigation Buttons
+       =========================== -->
   <section>
     <button onclick="goToHome()">🏠 Return to Home Page</button>
     <button onclick="goToAdmin()">⚙️ Back to Admin Panel</button>
   </section>
 
+  <!-- Link to the JavaScript file managing Users logic -->
   <script src="{{ url_for('static', filename='js/users.js') }}"></script>
+
 </body>
 </html>

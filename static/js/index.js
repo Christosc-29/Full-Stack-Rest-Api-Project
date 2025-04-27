@@ -1,5 +1,8 @@
-let allProducts = [];
+// =========================
+// 📦 Product Loading Functions
+// =========================
 
+// ➡️ Fetch all products from backend and display them
 function refreshProducts() {
   fetch('/api/products')
     .then(res => res.json())
@@ -9,12 +12,13 @@ function refreshProducts() {
     });
 }
 
+// ➡️ Render the list of products on the home page
 function displayProducts(products) {
   const list = document.getElementById('product-list');
   list.innerHTML = '';
 
   products.forEach(product => {
-    const image = product.image_url || "https://via.placeholder.com/150";
+    const image = product.image_url || "https://via.placeholder.com/150"; // Placeholder if no image
 
     const div = document.createElement('div');
     div.className = 'product';
@@ -29,6 +33,14 @@ function displayProducts(products) {
   });
 }
 
+// Store all loaded products globally
+let allProducts = [];
+
+// =========================
+// 🔍 Product Filtering
+// =========================
+
+// ➡️ Filter displayed products by name or ID
 function filterProducts() {
   const query = document.getElementById('search-box').value.toLowerCase();
 
@@ -40,7 +52,11 @@ function filterProducts() {
   displayProducts(filtered);
 }
 
+// =========================
+// 🔐 Login Logic
+// =========================
 
+// ➡️ Attempt login based on username/password fields
 function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
@@ -62,8 +78,14 @@ function login() {
     });
 }
 
+// =========================
+// 🚀 Page Navigation
+// =========================
+
+// ➡️ Navigate to Admin page
 function goToAdmin() {
   window.location.href = "/admin";
 }
 
+// Initial load of products when page loads
 refreshProducts();

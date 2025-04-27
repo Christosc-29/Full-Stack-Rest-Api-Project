@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Panel</title>
+  <!-- Link to the main CSS stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <h1>⚙️ Admin Panel</h1>
 
-  <!-- Add Product Section -->
+  <!-- ===========================
+       Section: Add New Products
+       =========================== -->
   <section>
     <h2>Add Product</h2>
     <table id="bulk-table">
@@ -23,6 +26,7 @@
         </tr>
       </thead>
       <tbody>
+        <!-- First empty row ready for input -->
         <tr>
           <td><input type="text" class="bulk-name"></td>
           <td><input type="number" class="bulk-price" step="0.01"></td>
@@ -33,14 +37,17 @@
         </tr>
       </tbody>
     </table>
-  
+
+    <!-- Buttons to add a new row and submit products -->
     <button onclick="addBulkRow()">➕ Add Row</button>
     <button onclick="submitBulkProducts()">📦 Submit</button>
   </section>
-  
-<hr>
 
-  <!-- Delete Product Section -->
+  <hr>
+
+  <!-- ===========================
+       Section: Delete Product
+       =========================== -->
   <section>
     <h2>Delete Product</h2>
     <input type="number" id="delete-id" placeholder="Delete by ID">
@@ -50,7 +57,9 @@
 
   <hr>
 
-  <!-- Delete All Products -->
+  <!-- ===========================
+       Section: Danger Zone (Delete All)
+       =========================== -->
   <section>
     <h2>Danger Zone</h2>
     <button onclick="deleteAllProducts()">🧨 Delete ALL Products</button>
@@ -58,7 +67,9 @@
 
   <hr>
 
-  <!-- Add/Delete -->
+  <!-- ===========================
+       Section: Edit Existing Products
+       =========================== -->
   <section>
     <h2>Edit Product</h2>
     <input type="number" id="edit-id" placeholder="Product ID to edit"><br>
@@ -69,14 +80,18 @@
     <input type="text" id="edit-image-url" placeholder="New Image URL"><br>
     <button onclick="editProduct()">✏️ Update Product</button>
   </section>
+
   <hr>
 
-  <!-- Navigation -->
+  <!-- ===========================
+       Section: Navigation Buttons
+       =========================== -->
   <section>
     <button onclick="goToHome()">🏠 Return to Home Page</button>
     <button onclick="goToUsers()">👤 Go to User Management</button>
   </section>
 
+  <!-- Link to the Admin Panel JavaScript logic -->
   <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>
