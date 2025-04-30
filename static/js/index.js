@@ -1,91 +1,108 @@
 // =========================
-// 📦 Product Loading Functions
+// 📦 Index Page Script
 // =========================
 
-// ➡️ Fetch all products from backend and display them
-function refreshProducts() {
-  fetch('/api/products')
+let products = []; // Stores all product data for filtering
+
+// Fetch product list from backend and draw on page
+function loadProducts() {
+  fetch("/api/products")
     .then(res => res.json())
     .then(data => {
-      allProducts = data;
-      displayProducts(data);
+      products = data;
+      drawProducts();
     });
 }
 
-// ➡️ Render the list of products on the home page
-function displayProducts(products) {
-  const list = document.getElementById('product-list');
-  list.innerHTML = '';
+// Filter products based on search box input
+function filter() {
+  const query = document.getElementById("inputSearch").value.toLowerCase();
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(query) || p.id.toString().includes(query)
+  );
+  drawProducts(filtered);
+}
 
-  products.forEach(product => {
-    const image = product.image_url || "https://via.placeholder.com/150"; // Placeholder if no image
+// Create and display product cards
+function drawProducts(list = products) {
+  const container = document.getElementById("product-list");
+  container.innerHTML = "";
 
-    const div = document.createElement('div');
-    div.className = 'product';
-    div.innerHTML = `
-      <h3>${product.name}</h3>
-      <p><strong>ID:</strong> ${product.id}</p>
-      <p>Price: €${product.price}</p>
-      <p>Stock: ${product.stock}</p>
-      <a href="/product?id=${product.id}">🔍 View</a>
+  list.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "product";
+
+    card.innerHTML = `
+      <h3>${p.name}</h3>
+      <p><strong>💰 Price:</strong> €${p.price}</p>
+      <p><strong>📦 Stock:</strong> ${p.stock}</p>
+      <button onclick="goToProduct(${p.id})">🔍 View</button>
+      <button onclick="editProduct(${p.id})" style="margin-left: 0.5em; display: ${localStorage.getItem("isLoggedIn") === "true" ? 'inline-block' : 'none'}">✏️ Edit</button>
     `;
-    list.appendChild(div);
+
+    container.appendChild(card);
   });
 }
 
-// Store all loaded products globally
-let allProducts = [];
-
-// =========================
-// 🔍 Product Filtering
-// =========================
-
-// ➡️ Filter displayed products by name or ID
-function filterProducts() {
-  const query = document.getElementById('search-box').value.toLowerCase();
-
-  const filtered = allProducts.filter(p =>
-    p.name.toLowerCase().includes(query) ||
-    p.id.toString().includes(query)
-  );
-
-  displayProducts(filtered);
+// Navigate to product details
+function goToProduct(id) {
+  window.location.href = `/product?id=${id}`;
 }
 
-// =========================
-// 🔐 Login Logic
-// =========================
+// Store product ID and go to admin page for editing
+function editProduct(id) {
+  localStorage.setItem("editProductId", id);
+  window.location.href = "/admin";
+}
 
-// ➡️ Attempt login based on username/password fields
+// Attempt login and show/hide UI buttons accordingly
 function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+  const username = document.getElementById("inputUser").value;
+  const password = document.getElementById("inputPass").value;
 
-  fetch('/api/users')
+  fetch("/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
     .then(res => res.json())
-    .then(users => {
-      const valid = users.find(u =>
-        u.username.toLowerCase() === username.toLowerCase() &&
-        u.password === password
-      );
-
-      if (valid) {
-        alert("✅ Login successful!");
-        document.getElementById("admin-button").style.display = "inline-block";
+    .then(data => {
+      if (data.message) {
+        localStorage.setItem("isLoggedIn", "true");
+        updateAuthUI();
       } else {
-        alert("❌ Invalid credentials");
+        alert(data.error || "Login failed");
       }
     });
 }
 
-// =========================
-// 🚀 Page Navigation
-// =========================
+// Logout user and update UI
+function logout() {
+  localStorage.removeItem("isLoggedIn");
+  fetch("/logout")
+    .then(() => {
+      alert("👋 Logged out.");
+      window.location.href = "/home";
+    });
+}
 
-// ➡️ Navigate to Admin page
+
+// Redirect to admin panel
 function goToAdmin() {
   window.location.href = "/admin";
 }
 
-// Initial load of products when page loads
-refreshProducts();
+// Toggle login/logout visibility
+function updateAuthUI() {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  document.getElementById("login-button").style.display = isLoggedIn ? "none" : "inline-block";
+  document.getElementById("btnAdmin").style.display = isLoggedIn ? "inline-block" : "none";
+  document.getElementById("btnLogout").style.display = isLoggedIn ? "inline-block" : "none";
+}
+
+// Initial setup on load
+window.onload = () => {
+  loadProducts();
+  updateAuthUI();
+  document.getElementById("inputSearch").addEventListener("input", filter);
+};

@@ -1,117 +1,127 @@
-// ===============================
+// ==============================
 // 👤 User Management Page Logic
-// ===============================
+// ==============================
 
-// ➡️ When the page loads, fetch all users and display them
-window.onload = loadUsers;
+window.onload = loadUserList;
 
-// Function: Load users from the server and display in a list
-function loadUsers() {
+// Load all users from backend
+function loadUserList() {
   fetch('/api/users/all')
     .then(res => res.json())
-    .then(users => {
-      const list = document.getElementById('user-list');
-      list.innerHTML = ''; // Clear current list
-
-      users.forEach(user => {
-        // Create a list item for each user with Change Password option
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>ID:</strong> ${user.id}, <strong>Username:</strong> ${user.username}
-          <input type="password" placeholder="New Password" id="new-pass-${user.id}">
-          <button onclick="changePassword(${user.id})">🔑 Change</button>
-        `;
-        list.appendChild(li);
-      });
+    .then(data => {
+      const ul = document.getElementById('user-list');
+      ul.innerHTML = '';
+      data.forEach(u => drawUser(u.id, u.username));
     });
 }
 
-// ➡️ Change the password of a specific user
-function changePassword(id) {
-  const newPass = document.getElementById(`new-pass-${id}`).value;
+// Render one user row
+function drawUser(uid, uname) {
+  const li = document.createElement('li');
+  li.style.marginBottom = '0.5em';
+  li.id = `user-${uid}`;
 
+  li.innerHTML = `
+    <strong>ID:</strong> ${uid}, <strong>Username:</strong> ${uname}
+    <button id="btn-change-${uid}" onclick="showPassField(${uid}, '${uname}')" style="margin-left: 2em;">🔑 Change</button>
+  `;
+
+  document.getElementById('user-list').appendChild(li);
+}
+
+// Show input to enter new password
+function showPassField(uid, uname) {
+  const li = document.getElementById(`user-${uid}`);
+  li.innerHTML = `
+    <strong>ID:</strong> ${uid}, <strong>Username:</strong> ${uname}
+    <input type="password" id="pass-${uid}" maxlength="14" style="margin-left: 1em; max-width: 140px;">
+    <button onclick="submitPass(${uid}, '${uname}')" style="margin-left: 0.5em;">💾 Save</button>
+    <button onclick="cancelEdit(${uid}, '${uname}')" style="margin-left: 0.5em;">❌ Cancel</button>
+  `;
+}
+
+// Cancel password change
+function cancelEdit(uid, uname) {
+  const li = document.getElementById(`user-${uid}`);
+  li.innerHTML = `
+    <strong>ID:</strong> ${uid}, <strong>Username:</strong> ${uname}
+    <button id="btn-change-${uid}" onclick="showPassField(${uid}, '${uname}')" style="margin-left: 2em;">🔑 Change</button>
+  `;
+}
+
+// Send password update
+function submitPass(uid, uname) {
+  const newPass = document.getElementById(`pass-${uid}`).value;
   if (!newPass) {
     alert("⚠️ Please enter a new password.");
     return;
   }
 
-  // Send new password to the server
-  fetch(`/api/users/${id}/password`, {
+  fetch(`/api/users/${uid}/password`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: newPass })
   })
-  .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "Password changed!");
-    document.getElementById(`new-pass-${id}`).value = ''; // Clear the input after success
-  });
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || "✅ Password updated.");
+      cancelEdit(uid, uname);
+    });
 }
 
-// ➡️ Add a new user with username and password
+// Add a new user
 function addUser() {
-  const username = document.getElementById("new-username").value;
-  const password = document.getElementById("new-password").value;
+  const uname = document.getElementById("new-username").value;
+  const pass = document.getElementById("new-password").value;
 
-  // Send new user data to the server
   fetch('/api/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username: uname, password: pass })
   })
-  .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "User added!");
-    loadUsers(); // Reload the updated user list
-  });
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || "✅ User added.");
+      loadUserList();
+    });
 }
 
-// ➡️ Delete a user by ID (with confirmation popup)
-function deleteUser(userId = null) {
-  // If no ID passed manually, try getting from input field
-  if (!userId) {
-    userId = document.getElementById("delete-user-id").value;
-  }
-
-  if (!userId) {
+// Delete user by ID (from input or param)
+function deleteUser(uid = null) {
+  if (!uid) uid = document.getElementById("delete-user-id").value;
+  if (!uid) {
     alert("❗ Please enter a User ID to delete.");
     return;
   }
 
-  const confirmDelete = confirm(`⚠️ Are you sure you want to delete user ID ${userId}?`);
-  if (!confirmDelete) return;
+  const confirmDel = confirm(`⚠️ Are you sure you want to delete user ID ${uid}?`);
+  if (!confirmDel) return;
 
-  // Send delete request to server
-  fetch(`/api/users/${userId}`, {
+  fetch(`/api/users/${uid}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirm: "Y" })
   })
-  .then(async res => {
-    const data = await res.json();
-    if (res.ok) {
-      alert(data.message || "✅ User deleted.");
-      loadUsers(); // Reload updated user list after deletion
-    } else {
-      alert(data.error || "❌ Failed to delete user.");
-    }
-  })
-  .catch(err => {
-    alert("❌ An unexpected error occurred.");
-    console.error(err);
-  });
+    .then(async res => {
+      const result = await res.json();
+      if (res.ok) {
+        alert(result.message || "✅ User deleted.");
+        loadUserList();
+      } else {
+        alert(result.error || "❌ Failed to delete user.");
+      }
+    })
+    .catch(err => {
+      alert("❌ An unexpected error occurred.");
+      console.error(err);
+    });
 }
 
-// ===============================
-// 🚀 Navigation Functions
-// ===============================
-
-// ➡️ Go to the Home page
+// Navigation shortcuts
 function goToHome() {
   window.location.href = "/home";
 }
 
-// ➡️ Go to the Admin panel
 function goToAdmin() {
   window.location.href = "/admin";
 }

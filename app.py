@@ -1,315 +1,263 @@
-
-# -----------------------------------------
-# Import Libraries and Setup
-# -----------------------------------------
+# ==========================
+# 📦 Flask App Configuration
+# ==========================
 
 import pymysql
 pymysql.install_as_MySQLdb()
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_mysqldb import MySQL
+from functools import wraps
 
-# Initialize Flask app
 app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Set a proper key in production
 
-# Configure MySQL connection
+# DB connection settings
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'cmp210'
 
-# Initialize MySQL extension
 mysql = MySQL(app)
 
-# -----------------------------------------
-# Page Routes (HTML pages)
-# -----------------------------------------
+# ==========================
+# 🔐 Session Check & Logout
+# ==========================
 
-# Route: /home
-# Method: GET
-# Purpose: Render the home page (index.html)
+def is_logged_in():
+    return session.get('logged_in') is True
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+# ==========================
+# 🌐 Page Routes
+# ==========================
+
 @app.route('/home')
 def home_page():
     return render_template('index.html')
 
-# Route: /admin
-# Method: GET
-# Purpose: Render the admin panel page
 @app.route('/admin')
 def admin_page():
+    if not is_logged_in():
+        return redirect(url_for('login_page'))
     return render_template('admin.html')
 
-# Route: /users
-# Method: GET
-# Purpose: Render the user management page
 @app.route('/users')
 def users_page():
+    if not is_logged_in():
+        return redirect(url_for('login_page'))
     return render_template('users.html')
 
-# Route: /product
-# Method: GET
-# Purpose: Render a specific product details page
 @app.route('/product')
 def product_page():
     return render_template('product.html')
 
-# -----------------------------------------
-# API Routes for Products
-# -----------------------------------------
+@app.route('/login', methods=['GET'])
+def login_page():
+    return render_template('login.html')
 
-# Route: /api/products
-# Method: GET
-# Purpose: Return all products
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    uname = data.get('username')
+    pword = data.get('password')
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (uname, pword))
+    user = cursor.fetchone()
+    cursor.close()
+
+    if user:
+        session['logged_in'] = True
+        return jsonify({"message": "✅ Login successful"})
+    else:
+        return jsonify({"error": "❌ Invalid credentials"}), 401
+
+# ==========================
+# 📦 Product API
+# ==========================
+
 @app.route('/api/products', methods=['GET'])
 def get_products():
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id, name, price, stock FROM store")
     rows = cursor.fetchall()
     cursor.close()
-    products = [{"id": row[0], "name": row[1], "price": float(row[2]), "stock": row[3]} for row in rows]
+    products = [{"id": r[0], "name": r[1], "price": float(r[2]), "stock": r[3]} for r in rows]
     return jsonify(products)
 
-# (Continuing with more after this)
-
-# Route: /api/products
-# Method: POST
-# Purpose: Add a new product to the store
 @app.route('/api/products', methods=['POST'])
 def add_product():
     data = request.get_json()
-    name = data.get('name')
-    price = data.get('price')
-    stock = data.get('stock')
-    details = data.get('details')
-    image_url = data.get('image_url', '')
-
     cursor = mysql.connection.cursor()
     cursor.execute(
         "INSERT INTO store (name, price, stock, details, image_url) VALUES (%s, %s, %s, %s, %s)",
-        (name, price, stock, details, image_url)
+        (data.get('name'), data.get('price'), data.get('stock'),
+         data.get('details'), data.get('image_url', ''))
     )
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": "✅ Product added!"}), 201
 
-    return jsonify({"message": "✅ Product added successfully!"}), 201
-
-# Route: /api/products/<product_id>
-# Method: GET
-# Purpose: Get a single product's full details by ID
-@app.route('/api/products/<int:product_id>', methods=['GET'])
-def get_product_by_id(product_id):
+@app.route('/api/products/<int:pid>', methods=['GET'])
+def get_product_by_id(pid):
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id, name, price, stock, details, image_url FROM store WHERE id = %s", (product_id,))
+    cursor.execute("SELECT id, name, price, stock, details, image_url FROM store WHERE id = %s", (pid,))
     row = cursor.fetchone()
     cursor.close()
-
     if row:
         return jsonify({
             "id": row[0], "name": row[1], "price": float(row[2]),
             "stock": row[3], "details": row[4] or "", "image_url": row[5] or ""
         })
-    else:
-        return jsonify({"error": "🔍 Product not found."}), 404
+    return jsonify({"error": "🔍 Product not found."}), 404
 
-# Route: /api/products/<product_id>
-# Method: DELETE
-# Purpose: Delete a product by ID (with confirmation)
-@app.route('/api/products/<int:product_id>', methods=['DELETE'])
-def delete_product(product_id):
+@app.route('/api/products/<pid>', methods=['DELETE'])
+def delete_product(pid):
     data = request.get_json()
-    confirm = data.get('confirm')
-    if confirm != "Y":
-        return jsonify({"message": f"⚠️ Confirm deletion of product ID {product_id}."}), 400
+    if data.get('confirm') != "Y":
+        return jsonify({"message": f"⚠️ Confirm deletion of product ID {pid}."}), 400
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id FROM store WHERE id = %s", (product_id,))
+    cursor.execute("SELECT id FROM store WHERE id = %s", (pid,))
     if not cursor.fetchone():
         cursor.close()
-        return jsonify({"error": f"❌ Product ID {product_id} not found."}), 404
+        return jsonify({"error": f"❌ Product ID {pid} not found."}), 404
 
-    cursor.execute("DELETE FROM store WHERE id = %s", (product_id,))
+    cursor.execute("DELETE FROM store WHERE id = %s", (pid,))
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"🗑️ Product ID {pid} deleted."})
 
-    return jsonify({"message": f"🗑️ Product ID {product_id} deleted."})
-
-# Route: /api/products/name/<name>
-# Method: DELETE
-# Purpose: Delete a product by its name (with confirmation)
 @app.route('/api/products/name/<string:name>', methods=['DELETE'])
 def delete_product_by_name(name):
     data = request.get_json()
-    confirm = data.get('confirm')
-    if confirm != "Y":
+    if data.get('confirm') != "Y":
         return jsonify({"message": f"⚠️ Confirm deletion of product named '{name}'."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT name FROM store WHERE name = %s", (name,))
     if not cursor.fetchone():
         cursor.close()
-        return jsonify({"error": f"❌ Product named '{name}' not found."}), 404
+        return jsonify({"error": f"❌ Product '{name}' not found."}), 404
 
     cursor.execute("DELETE FROM store WHERE name = %s", (name,))
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"🗑️ Product '{name}' deleted."})
 
-    return jsonify({"message": f"🗑️ Product named '{name}' deleted."})
-
-# Route: /api/products/all
-# Method: DELETE
-# Purpose: Delete all products from the store (with confirmation)
 @app.route('/api/products/all', methods=['DELETE'])
 def delete_all_products():
     data = request.get_json()
-    confirm = data.get('confirm')
-    if confirm != "Y":
+    if data.get('confirm') != "Y":
         return jsonify({"message": "⚠️ Confirm deletion of ALL products."}), 400
 
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM store")
     mysql.connection.commit()
     cursor.close()
-
     return jsonify({"message": "🧨 All products deleted."})
 
-# Route: /api/products/<product_id>
-# Method: PUT
-# Purpose: Update a product's details
-@app.route('/api/products/<int:product_id>', methods=['PUT'])
-def update_product(product_id):
+@app.route('/api/products/<int:pid>', methods=['PUT'])
+def update_product(pid):
     data = request.get_json()
-    name = data.get('name')
-    price = data.get('price')
-    stock = data.get('stock')
-    details = data.get('details')
-    image_url = data.get('image_url')
-
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id FROM store WHERE id = %s", (product_id,))
+    cursor.execute("SELECT id FROM store WHERE id = %s", (pid,))
     if not cursor.fetchone():
         cursor.close()
-        return jsonify({"error": f"❌ Product ID {product_id} not found."}), 404
+        return jsonify({"error": f"❌ Product ID {pid} not found."}), 404
 
     cursor.execute("""
         UPDATE store
         SET name = %s, price = %s, stock = %s, details = %s, image_url = %s
         WHERE id = %s
-    """, (name, price, stock, details, image_url, product_id))
+    """, (data['name'], data['price'], data['stock'], data['details'], data['image_url'], pid))
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"✏️ Product ID {pid} updated."})
 
-    return jsonify({"message": f"✏️ Product ID {product_id} updated successfully."})
-
-# Route: /api/products/bulk
-# Method: POST
-# Purpose: Add multiple products in bulk
 @app.route('/api/products/bulk', methods=['POST'])
-def add_bulk_products():
+def bulk_add_products():
     data = request.get_json()
-    products = data.get('products', [])
-
     cursor = mysql.connection.cursor()
-    for product in products:
+    for p in data.get('products', []):
         cursor.execute(
             "INSERT INTO store (name, price, stock, details, image_url) VALUES (%s, %s, %s, %s, %s)",
-            (product['name'], product['price'], product['stock'], product['details'], product['image_url'])
+            (p['name'], p['price'], p['stock'], p['details'], p['image_url'])
         )
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"✅ {len(data.get('products', []))} added."})
 
-    return jsonify({"message": f"✅ {len(products)} products added in bulk."})
+# ==========================
+# 👥 User API
+# ==========================
 
-# -----------------------------------------
-# API Routes for Users
-# -----------------------------------------
-
-# Route: /api/users
-# Method: GET
-# Purpose: Return all users with passwords (for login check)
 @app.route('/api/users', methods=['GET'])
-def get_user_credentials():
+def list_user_credentials():
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT username, password FROM users")
     rows = cursor.fetchall()
     cursor.close()
+    return jsonify([{"username": r[0], "password": r[1]} for r in rows])
 
-    return jsonify([{"username": row[0], "password": row[1]} for row in rows])
-
-# Route: /api/users/all
-# Method: GET
-# Purpose: Return all users (without passwords)
 @app.route('/api/users/all', methods=['GET'])
-def get_all_users():
+def list_users():
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id, username FROM users WHERE username != 'rootadmin'")
     rows = cursor.fetchall()
     cursor.close()
+    return jsonify([{"id": r[0], "username": r[1]} for r in rows])
 
-    return jsonify([{"id": row[0], "username": row[1]} for row in rows])
-
-# Route: /api/users
-# Method: POST
-# Purpose: Add a new user
 @app.route('/api/users', methods=['POST'])
 def add_user():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
     cursor = mysql.connection.cursor()
-    cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+    cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)",
+                   (data.get('username'), data.get('password')))
     mysql.connection.commit()
     cursor.close()
-
     return jsonify({"message": "✅ User added!"})
 
-# Route: /api/users/<user_id>
-# Method: DELETE
-# Purpose: Delete a user by ID (except rootadmin)
-@app.route('/api/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    if user_id == 999:
+@app.route('/api/users/<int:uid>', methods=['DELETE'])
+def delete_user(uid):
+    if uid == 999:
         return jsonify({"error": "❌ Cannot delete root admin."}), 403
 
     data = request.get_json()
-    confirm = data.get('confirm')
-    if confirm != "Y":
-        return jsonify({"message": f"⚠️ Confirm deletion of user ID {user_id}."}), 400
+    if data.get('confirm') != "Y":
+        return jsonify({"message": f"⚠️ Confirm deletion of user ID {uid}."}), 400
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT id FROM users WHERE id = %s", (uid,))
     if not cursor.fetchone():
         cursor.close()
-        return jsonify({"error": f"❌ User ID {user_id} not found."}), 404
+        return jsonify({"error": f"❌ User ID {uid} not found."}), 404
 
-    cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = %s", (uid,))
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"🗑️ User ID {uid} deleted."})
 
-    return jsonify({"message": f"🗑️ User ID {user_id} deleted."})
-
-# Route: /api/users/<user_id>/password
-# Method: PUT
-# Purpose: Update a user's password
-@app.route('/api/users/<int:user_id>/password', methods=['PUT'])
-def change_user_password(user_id):
-    if user_id == 999:
-        return jsonify({"error": "❌ Cannot change rootadmin password here."}), 403
+@app.route('/api/users/<int:uid>/password', methods=['PUT'])
+def update_user_password(uid):
+    if uid == 999:
+        return jsonify({"error": "❌ Cannot change rootadmin password."}), 403
 
     data = request.get_json()
-    new_password = data.get('password')
-
     cursor = mysql.connection.cursor()
-    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (new_password, user_id))
+    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (data['password'], uid))
     mysql.connection.commit()
     cursor.close()
+    return jsonify({"message": f"🔑 Password updated for user ID {uid}."})
 
-    return jsonify({"message": f"🔑 Password updated for user ID {user_id}."})
+# ==========================
+# 🚀 App Entry Point
+# ==========================
 
-# -----------------------------------------
-# Main Run
-# -----------------------------------------
-
-# Start the Flask development server
 if __name__ == '__main__':
     app.run(debug=True)

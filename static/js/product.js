@@ -2,21 +2,21 @@
 // 📄 Product Details Page Logic
 // ==============================
 
-// ➡️ Parse URL parameters to get product ID
+// Get product ID from URL query string
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// ➡️ Fetch the product details from backend
+// Fetch product data by ID from backend
 fetch(`/api/products/${id}`)
   .then(res => res.json())
   .then(product => {
     if (product.error) {
-      // If the product is not found, display an error message
+      // Show error if product not found
       document.body.innerHTML = `<h2>❌ Product not found.</h2><a href="/home">← Back</a>`;
       return;
     }
 
-    // ➡️ If product found, fill the HTML elements with product info
+    // Fill page with product info
     document.getElementById("product-name").textContent = product.name;
     document.getElementById("product-id").textContent = product.id;
     document.getElementById("product-price").textContent = product.price;
@@ -25,7 +25,7 @@ fetch(`/api/products/${id}`)
     document.getElementById("product-image").src = product.image_url || "https://via.placeholder.com/300";
   })
   .catch(err => {
-    // ➡️ If there was a server error, display a general error message
+    // Generic server error handler
     console.error("Error loading product:", err);
     document.body.innerHTML = `<h2>⚠️ Error loading product.</h2><a href="/home">← Back</a>`;
   });

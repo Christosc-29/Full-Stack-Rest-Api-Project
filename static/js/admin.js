@@ -1,13 +1,11 @@
+// ==============================
+// ✅ Admin Panel Functions
+// ==============================
 
-// ===================================================
-// 📦 Bulk Product Management
-// ===================================================
-
-// ➡️ Add a new empty row to the Bulk Add table
-function addBulkRow() {
+// Add new row to bulk input table
+function addRow() {
   const table = document.querySelector('#bulk-table tbody');
   const row = document.createElement('tr');
-  console.log("✅ admin.js loaded!");
 
   row.innerHTML = `
     <td><input type="text" class="bulk-name"></td>
@@ -21,50 +19,45 @@ function addBulkRow() {
   table.appendChild(row);
 }
 
-// ➡️ Collect all rows and submit them as bulk products
-function submitBulkProducts() {
+// Send all entered product rows to backend
+function sendBulk() {
   const rows = document.querySelectorAll('#bulk-table tbody tr');
-  const products = [];
+  const list = [];
 
   rows.forEach(row => {
     const name = row.querySelector('.bulk-name').value;
     const price = parseFloat(row.querySelector('.bulk-price').value);
     const stock = parseInt(row.querySelector('.bulk-stock').value);
     const details = row.querySelector('.bulk-details').value;
-    const image_url = row.querySelector('.bulk-image-url').value;
+    const image = row.querySelector('.bulk-image-url').value;
 
     if (name && !isNaN(price) && !isNaN(stock)) {
-      products.push({ name, price, stock, details, image_url });
+      list.push({ name, price, stock, details, image_url: image });
     }
   });
 
-  if (products.length === 0) {
-    alert("❗ Please fill out at least one valid product row.");
+  if (list.length === 0) {
+    alert("❗ Please fill at least one valid product row.");
     return;
   }
 
   fetch('/api/products/bulk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ products })
+    body: JSON.stringify({ products: list })
   })
   .then(res => res.json())
   .then(msg => {
-    alert(msg.message || "Products added!");
+    alert(msg.message || "✅ Products added!");
     document.querySelector('#bulk-table tbody').innerHTML = '';
-    addBulkRow();
+    addRow();
   });
 }
 
-// ===================================================
-// 🗑️ Single or Bulk Deletion Functions
-// ===================================================
-
-// ➡️ Smart delete by ID or Name
+// Delete product by ID or Name
 function smartDelete() {
   const id = document.getElementById("delete-id").value;
   const name = document.getElementById("delete-name").value;
-  console.log("🧪 Running updated smartDelete");
 
   if (id) {
     fetch(`/api/products/${id}`, {
@@ -72,37 +65,24 @@ function smartDelete() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirm: "Y" })
     })
-    .then(async res => {
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || "✅ Product deleted!");
-      } else {
-        alert(data.error || "❌ Failed: " + data.error);
-      }
-    });
+    .then(res => res.json())
+    .then(data => alert(data.message || data.error));
   } else if (name) {
     fetch(`/api/products/name/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirm: "Y" })
     })
-    .then(async res => {
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || "✅ Product deleted!");
-      } else {
-        alert(data.error || "❌ Failed: " + data.error);
-      }
-    });
+    .then(res => res.json())
+    .then(data => alert(data.message || data.error));
   } else {
-    alert("❗ Please enter either a Product ID or Name to delete.");
+    alert("❗ Enter ID or Name to delete.");
   }
 }
 
-// ➡️ Delete ALL products after confirmation
-function deleteAllProducts() {
-  const confirmDelete = confirm("⚠️ You are about to delete ALL products. Are you sure?");
-  if (!confirmDelete) return;
+// Remove all products
+function nukeAll() {
+  if (!confirm("⚠️ Delete ALL products?")) return;
 
   fetch(`/api/products/all`, {
     method: 'DELETE',
@@ -110,20 +90,13 @@ function deleteAllProducts() {
     body: JSON.stringify({ confirm: "Y" })
   })
   .then(res => res.json())
-  .then(msg => {
-    alert(msg.message || "All products deleted.");
-  });
+  .then(data => alert(data.message || "All products deleted."));
 }
 
-// ===================================================
-// ✏️ Editing Products
-// ===================================================
-
-// ➡️ Edit an existing product by ID
-function editProduct() {
+// Submit product edits to backend
+function updateProduct() {
   const id = document.getElementById("edit-id").value;
-
-  const updatedData = {
+  const data = {
     name: document.getElementById("edit-name").value,
     price: parseFloat(document.getElementById("edit-price").value),
     stock: parseInt(document.getElementById("edit-stock").value),
@@ -134,28 +107,44 @@ function editProduct() {
   fetch(`/api/products/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData)
+    body: JSON.stringify(data)
   })
-  .then(async res => {
-    const data = await res.json();
-    if (res.ok) {
-      alert(data.message || `✅ Product ID ${id} updated successfully.`);
-    } else {
-      alert(data.error || `❌ Failed to update product ID \${id}.`);
-    }
-  });
+  .then(res => res.json())
+  .then(data => alert(data.message || data.error));
 }
 
-// ===================================================
-// 🚪 Page Navigation
-// ===================================================
+// Prefill form if redirected with edit ID
+window.addEventListener("DOMContentLoaded", () => {
+  const editId = localStorage.getItem("editProductId");
+  if (editId) {
+    fetch(`/api/products/${editId}`)
+      .then(res => res.json())
+      .then(p => {
+        document.getElementById("edit-id").value = p.id;
+        document.getElementById("edit-name").value = p.name;
+        document.getElementById("edit-price").value = p.price;
+        document.getElementById("edit-stock").value = p.stock;
+        document.getElementById("edit-details").value = p.details;
+        document.getElementById("edit-image-url").value = p.image_url;
+        localStorage.removeItem("editProductId");
+      });
+  }
+});
 
-// ➡️ Navigate back to Home page
+// Navigation and logout
 function goToHome() {
   window.location.href = "/home";
 }
 
-// ➡️ Navigate to Users management page
 function goToUsers() {
   window.location.href = "/users";
+}
+
+function logout() {
+  localStorage.removeItem("isLoggedIn");
+  fetch("/logout")
+    .then(() => {
+      alert("👋 Logged out.");
+      window.location.href = "/home";
+    });
 }
